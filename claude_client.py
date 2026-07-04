@@ -88,12 +88,12 @@ Evaluate the response on EXACTLY these 5 dimensions. Return ONLY a JSON object, 
 
 def load_prompt_template(use_case: str, user_input: str) -> str:
     """Load the correct prompt template and inject user input."""
-    template_map = {
-        "Support Response": "prompts/support_response.txt",
-        "Escalation Summary": "prompts/escalation_summary.txt",
-        "Proactive Status Update": "prompts/status_update.txt",
-        "Knowledge / FAQ Answer": "prompts/knowledge_retrieval.txt",
-    }
+   template_map = {
+    "Support Response": "prompts/support/support-response-v3.md",
+    "Escalation Summary": "prompts/escalation/escalation-summary-v2.md",
+    "Proactive Status Update": "prompts/status/status-update-v2.md",
+    "Knowledge / FAQ Answer": "prompts/knowledge/knowledge-retrieval-v2.md",
+}
     filepath = template_map.get(use_case)
     if not filepath or not os.path.exists(filepath):
         raise FileNotFoundError(f"Prompt template not found for: {use_case}")
