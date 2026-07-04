@@ -1,28 +1,98 @@
-# Enterprise CS Prompt Framework
-### LLM-Assisted Client Communication for Investment Management & FinTech SaaS
+# Enterprise CS AI Assistant
+
+A web application that turns raw incident details, email threads, and client questions into polished, review-ready communications — using Claude (Anthropic) and the Enterprise CS Prompt Framework.
+
+**Live demo:** `https://your-app.streamlit.app` *(add after deployment)*
 
 ---
 
-> **Built from production experience.**
-> This framework emerged from real work: deploying Claude and ChatGPT across enterprise client success workflows in an investment data management SaaS environment. It reduced client-facing response time by ~50% across 5 enterprise accounts over a 12-month rollout.
->
-> It is not a tutorial. It is not a collection of "awesome prompts." It is a structured, opinionated system for making LLMs reliable enough to trust inside regulated, client-facing enterprise operations.
+## What it does
+
+| Use Case | Input | Output |
+|---|---|---|
+| **Support Response** | Ticket details, client email | Draft reply email, 150–200 words |
+| **Escalation Summary** | Raw email thread or ticket history | Structured internal handoff document |
+| **Proactive Status Update** | Incident context + relationship temperature | Proactive client update email |
+| **Knowledge / FAQ Answer** | Client question + knowledge base excerpt | Grounded, accurate client-facing answer |
+
+Every output is evaluated against a **5-point rubric** (factual accuracy, tone, completeness, format, placeholder check) before you send.
 
 ---
 
-## Why this exists
+## Tech stack
 
-Most enterprise teams fail at AI adoption not because the models are bad — but because they deploy them wrong.
+- **Python 3.10+**
+- **Streamlit** — UI
+- **Anthropic Claude** (`claude-sonnet-4-6`) — generation and evaluation
+- **Prompt engineering framework** — 4 production-tested templates
 
-They give a CSM access to ChatGPT and say "use this to respond faster." What they get is inconsistent tone, hallucinated details, responses that don't match their brand, and one bad client interaction that kills trust in the tool for six months.
+---
 
-This framework solves that. It provides:
+## Local setup
 
-- **Structured prompt templates** across the four highest-friction CS workflows
-- **Injection patterns** for domain-specific context (fund types, data terminology, SLA language)
-- **Iteration logs** showing what changed between prompt versions and why
-- **Evaluation rubrics** for scoring LLM output before it reaches a client
-- **Adoption playbook** for rolling this out across a CS team without chaos
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/YOUR_USERNAME/enterprise-cs-prompt-framework.git
+cd enterprise-cs-prompt-framework
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Add your API key
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add your Anthropic API key:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Get one at: https://console.anthropic.com
+
+### 4. Run locally
+
+```bash
+streamlit run app.py
+```
+
+Opens at `http://localhost:8501`
+
+---
+
+## Deploy to Streamlit Cloud (free)
+
+1. Push this repo to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io) and connect your repo
+3. Set the main file path to `app.py`
+4. Under **Settings → Secrets**, add:
+
+```toml
+ANTHROPIC_API_KEY = "sk-ant-your-key-here"
+```
+
+5. Deploy — you'll get a public URL at `https://your-app-name.streamlit.app`
+
+---
+
+## How the evaluation rubric works
+
+After generating a draft, click **Run Rubric Check**. Claude evaluates the output on:
+
+1. **Factual accuracy** — are all claims grounded in the context you provided?
+2. **Tone calibration** — appropriate for enterprise FinTech? No weak/filler phrases?
+3. **Completeness** — does the client know what happens next and when?
+4. **Length & format** — right length, no unnecessary preamble?
+5. **Placeholder check** — any `[REQUIRES INPUT]` or `[REQUIRES HUMAN CONFIRMATION]` markers unresolved?
+
+**Verdict:** Send after review / Revise before sending / Rewrite manually
 
 ---
 
@@ -31,75 +101,32 @@ This framework solves that. It provides:
 ```
 enterprise-cs-prompt-framework/
 │
-├── prompts/
-│   ├── support/          # Inbound issue response drafting
-│   ├── escalation/       # Escalation summarisation for internal handoff
-│   ├── status/           # Proactive status updates to clients
-│   └── knowledge/        # FAQ and knowledge retrieval responses
+├── app.py                    ← Streamlit UI
+├── claude_client.py          ← Anthropic API wrapper + prompt loader
+├── requirements.txt
+├── .env.example              ← Copy to .env for local dev
 │
-├── evaluation/           # Scoring rubrics and output quality checklists
-├── examples/             # Before/after: raw LLM output vs. framework output
-├── docs/                 # Adoption playbook, onboarding guide, design decisions
-└── scripts/              # Utilities: prompt testing, batch evaluation
+├── prompts/
+│   ├── support_response.txt
+│   ├── escalation_summary.txt
+│   ├── status_update.txt
+│   └── knowledge_retrieval.txt
+│
+└── .streamlit/
+    └── secrets.toml.example  ← For Streamlit Cloud deployment
 ```
 
 ---
 
-## The four prompt categories
+## Design decisions
 
-| Category | Use case | Friction before LLM | Outcome after framework |
-|---|---|---|---|
-| **Support response** | Drafting replies to inbound client issues | 30–45 min per response, inconsistent quality | ~10 min with structured prompt, consistent tone |
-| **Escalation summary** | Summarising incident context for internal handoff | Manual writeup, often incomplete | Structured summary in 2 min from raw thread |
-| **Status update** | Proactive client comms during incidents or delays | Delayed sends, variable messaging | Templated, reviewed, sent within SLA window |
-| **Knowledge retrieval** | Answering client FAQs from product/process knowledge | Searching docs manually, varying accuracy | Grounded responses with explicit knowledge injection |
-
----
-
-## Design principles
-
-**1. Specificity over flexibility**
-Generic prompts produce generic outputs. Every template here is opinionated about structure, tone, and length — because that's what makes output consistent enough to trust.
-
-**2. Context injection is non-negotiable**
-LLMs hallucinate when they lack domain context. Every prompt in this framework has a designated context block where the operator injects: client name, issue history, product area, SLA status, and relevant terminology. No prompt runs without it.
-
-**3. Output structure before tone**
-We found that fixing structure first (headers, length, format) produced more reliable improvements than tuning tone. Tone was the last variable we adjusted, not the first.
-
-**4. Evaluation before deployment**
-No LLM output goes to a client without passing a 5-point rubric check. The rubric lives in `/evaluation/`. It takes 60 seconds. It prevents the one bad response that kills six months of trust-building.
-
-**5. Designed for non-technical users**
-Every prompt is written so a CSM with no AI background can run it correctly. The complexity is in the design, not the operation.
-
----
-
-## Quick start
-
-1. Clone the repo
-2. Read `/docs/adoption-playbook.md` before using any prompts
-3. Start with `/prompts/support/support-response-v3.md` — the most battle-tested template
-4. Run any output through `/evaluation/output-rubric.md` before sending
-5. Log what you change and why in the iteration log format (see `/docs/iteration-log-template.md`)
-
----
-
-## What this is not
-
-- Not a plug-and-play tool. It requires a human in the loop at every step.
-- Not model-agnostic by accident. Templates are tested on Claude (Anthropic) and GPT-4. Other models may need adjustment.
-- Not a replacement for CS judgment. The framework handles drafting and structure. The CSM handles relationship, context, and final review.
+- **Claude over OpenAI** — the original prompt framework was built and tested on Claude. Using the same model in the app keeps behaviour consistent.
+- **Two-call architecture** — generation and evaluation are separate API calls. This keeps each prompt focused and produces more reliable evaluation scores.
+- **Human in the loop always** — no output is sent automatically. The app drafts; the CSM decides.
 
 ---
 
 ## Author
 
-**Pritha Ghosh** — AI Customer Success Leader, FinTech SaaS  
-12+ years across software engineering, enterprise CS, and LLM workflow design  
-Generative AI Certification — IIT Guwahati (In Progress, 2026)  
+**Pritha Ghosh** — AI Customer Success Leader, FinTech SaaS
 [linkedin.com/in/pritha-ghosh1](https://linkedin.com/in/pritha-ghosh1)
-
----
-
-*If this framework is useful to you — or if you think something is wrong with it — open an issue or connect on LinkedIn. I'm more interested in the conversation than the stars.*
